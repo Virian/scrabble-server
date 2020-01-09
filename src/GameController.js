@@ -1,1 +1,5 @@
-// contains list of games
+export default class GameController {
+  constructor() {
+    this.games = [];
+  }
+}
