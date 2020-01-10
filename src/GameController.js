@@ -1,5 +1,5 @@
-export default class GameController {
+module.exports = class GameController {
   constructor() {
     this.games = [];
   }
-}
+};

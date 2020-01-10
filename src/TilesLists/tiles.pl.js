@@ -1,4 +1,4 @@
-export default [
+module.exports = [
   {
     letter: 'a',
     count: 9,
