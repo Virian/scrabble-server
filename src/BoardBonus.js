@@ -1,5 +1,7 @@
 module.exports = class BoardBonus {
-  constructor({ y, x, type, multiplier }) {
+  constructor({
+    y, x, type, multiplier,
+  }) {
     this.x = x;
     this.y = y;
     this.type = type; // can be word or letter

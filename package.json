@@ -8,7 +8,9 @@
   "main": "./src/index.js",
   "scripts": {
     "server": "nodemon ./src/index.js --mode development",
-    "start": "cross-env PORT=5000 node ./src/index.js"
+    "start": "cross-env PORT=5000 node ./src/index.js",
+    "lint": "eslint **/*.js",
+    "lint-fix": "eslint **/*.js --fix"
   },
   "keywords": [],
   "author": "",

@@ -1,5 +1,6 @@
 const express = require('express');
 const { Server } = require('ws');
+const Game = require('./Game');
 
 const PORT = process.env.PORT || 3000;
 const INDEX = '/index.html'; // TODO: remove
@@ -9,6 +10,9 @@ const server = express()
   .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 const wss = new Server({ server });
+
+const test = new Game();
+test.initGame();
 
 wss.on('connection', (ws, request) => {
   console.log('Client connected');
