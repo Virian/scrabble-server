@@ -8,8 +8,10 @@ module.exports = class Game {
   constructor() {
     this.players = [];
     this.activePlayerIndex = -1;
+    this.roundNumber = 1;
     this.bag = [];
     this.board = new Board();
+    this.holdCount = 0;
   }
 
   isReadyToStart() {
@@ -29,9 +31,31 @@ module.exports = class Game {
   }
 
   addPlayer(socket, ip) {
+    socket.on('message', (message) => {
+      this.handleClientMessage(message, ip)
+    });
     this.players.push({
       player: new Player(ip),
       socket,
     });
+  }
+
+  handleClientMessage(message, ip) {
+    const data = JSON.parse(message);
+    const playerIndex = this.players.findIndex(player => player.player.ip === ip)
+    if (this.activePlayerIndex !== playerIndex) return;
+    switch (message.action) {
+      case 'place':
+        // place tiles
+        break;
+      case 'swap':
+        // swap tiles
+        break;
+      case 'hold':
+        // hold
+        break;
+      default:
+        // unknown action
+    }
   }
 };

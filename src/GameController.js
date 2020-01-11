@@ -8,7 +8,7 @@ module.exports = class GameController {
   connectToGame(socket, ip) {
     // const isPlayerInGame = !!this.games.find((game) => game.players.find((player) => player.player.ip === ip));
     // if (isPlayerInGame) {
-    //   socket.send('Już jesteś w grze...');
+    //   socket.send('You are already in a game...');
     //   return;
     // }
     const gameToConnect = this.games.find((game) => !game.isReadyToStart());
@@ -19,6 +19,6 @@ module.exports = class GameController {
     } else {
       gameToConnect.addPlayer(socket, ip);
     }
-    socket.send('Zapraszam do gry');
+    socket.send('Connected to the game'); // TODO: change a little
   }
 };
