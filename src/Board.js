@@ -3,7 +3,15 @@ const BoardBonus = require('./BoardBonus');
 module.exports = class Board {
   constructor() {
     // creates default scrabble board
-    this.board = Array(15).fill(Array(15).fill(null)); // empty 15x15 board
+    /* eslint-disable no-plusplus */
+    this.board = new Array(15); // empty 15x15 board
+    for (let i = 0; i < this.board.length; i++) {
+      this.board[i] = new Array(15);
+      for (let j = 0; j < this.board[i].length; j++) {
+        this.board[i][j] = null;
+      }
+    }
+    /* eslint-enable no-plusplus */
     this.bonuses = [
       new BoardBonus({
         y: 0, x: 0, type: 'word', multiplier: 3,
@@ -189,5 +197,12 @@ module.exports = class Board {
         y: 14, x: 14, type: 'word', multiplier: 3,
       }),
     ];
+  }
+
+  toMessage() {
+    return {
+      board: this.board,
+      bonuses: this.bonuses,
+    }
   }
 };

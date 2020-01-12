@@ -3,6 +3,8 @@ const tiles = require('./TilesLists/tiles.pl');
 const Tile = require('./Tile');
 const Board = require('./Board');
 const Player = require('./Player');
+const Message = require('./Message');
+const messageTypes = require('./MessageTypes/messageTypes');
 
 module.exports = class Game {
   constructor() {
@@ -32,17 +34,18 @@ module.exports = class Game {
 
   addPlayer(socket, ip) {
     socket.on('message', (message) => {
-      this.handleClientMessage(message, ip)
+      this.handleClientMessage(message, ip);
     });
     this.players.push({
       player: new Player(ip),
       socket,
     });
+    socket.send(JSON.stringify(new Message({ type: messageTypes.SEND_BOARD, data: this.board.toMessage() })));
   }
 
   handleClientMessage(message, ip) {
     const data = JSON.parse(message);
-    const playerIndex = this.players.findIndex(player => player.player.ip === ip)
+    const playerIndex = this.players.findIndex((player) => player.player.ip === ip);
     if (this.activePlayerIndex !== playerIndex) return;
     switch (message.action) {
       case 'place':
