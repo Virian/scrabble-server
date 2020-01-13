@@ -203,6 +203,6 @@ module.exports = class Board {
     return {
       board: this.board,
       bonuses: this.bonuses,
-    }
+    };
   }
 };

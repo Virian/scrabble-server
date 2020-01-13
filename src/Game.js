@@ -5,6 +5,7 @@ const Board = require('./Board');
 const Player = require('./Player');
 const Message = require('./Message');
 const messageTypes = require('./MessageTypes/messageTypes');
+const gameState = require('./GameState/GameState');
 
 module.exports = class Game {
   constructor() {
@@ -14,6 +15,7 @@ module.exports = class Game {
     this.bag = [];
     this.board = new Board();
     this.holdCount = 0;
+    this.state = gameState.WAITING_FOR_PLAYERS;
   }
 
   isReadyToStart() {
