@@ -4,7 +4,7 @@ const Tile = require('./Tile');
 const Board = require('./Board');
 const Player = require('./Player');
 const Message = require('./Message');
-const messageTypes = require('./MessageTypes/messageTypes');
+const MessageTypes = require('./MessageTypes/MessageTypes');
 const gameState = require('./GameState/GameState');
 
 module.exports = class Game {
@@ -28,9 +28,10 @@ module.exports = class Game {
       .reduce((acc, curr) => acc.concat(curr), []);
     this.bag = shuffle(this.bag);
     this.activePlayerIndex = Math.floor(Math.random() * this.players.length);
-    this.players.forEach(({ player }) => {
+    this.players.forEach(({ player, socket }) => {
       const playerTiles = this.bag.splice(0, 7);
       player.giveTiles(playerTiles);
+      socket.send(JSON.stringify(new Message({ type: MessageTypes.ADD_TILES, data: playerTiles })));
     });
   }
 
@@ -42,7 +43,7 @@ module.exports = class Game {
       player: new Player(ip),
       socket,
     });
-    socket.send(JSON.stringify(new Message({ type: messageTypes.SEND_BOARD, data: this.board.toMessage() })));
+    socket.send(JSON.stringify(new Message({ type: MessageTypes.SEND_BOARD, data: this.board.toMessage() })));
   }
 
   handleClientMessage(message, ip) {

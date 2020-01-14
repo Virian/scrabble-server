@@ -19,6 +19,7 @@ module.exports = class GameController {
       this.games.push(newGame);
     } else {
       gameToConnect.addPlayer(socket, ip);
+      if (gameToConnect.isReadyToStart()) gameToConnect.initGame();
     }
     // TODO: send information about connection?
     // socket.send('Connected to the game');
