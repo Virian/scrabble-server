@@ -27,11 +27,17 @@ module.exports = class Game {
       .map((tile) => Array(tile.count).fill(new Tile(tile)))
       .reduce((acc, curr) => acc.concat(curr), []);
     this.bag = shuffle(this.bag);
-    this.activePlayerIndex = Math.floor(Math.random() * this.players.length);
+    this.players = shuffle(this.players);
+    this.players.forEach((_, index) => {
+      this.players[index].player.order = index;
+    });
+    this.activePlayerIndex = 0;
+    const playerOrder = this.players.map(({ player: { id, order } }) => ({ id, order }));
     this.players.forEach(({ player, socket }) => {
       const playerTiles = this.bag.splice(0, 7);
       player.giveTiles(playerTiles);
       socket.send(JSON.stringify(new Message({ type: MessageTypes.ADD_TILES, data: playerTiles })));
+      socket.send(JSON.stringify(new Message({ type: MessageTypes.PLAYER_ORDER, data: playerOrder })));
     });
   }
 
