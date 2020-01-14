@@ -1,6 +1,7 @@
 module.exports = class Player {
-  constructor(ip) {
-    this.ip = ip; // will be used a player identifier
+  constructor({ id, ip}) {
+    this.id = id;
+    this.ip = ip;
     this.score = 0;
     this.rack = [];
   }
