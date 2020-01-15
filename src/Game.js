@@ -38,6 +38,7 @@ module.exports = class Game {
       player.giveTiles(playerTiles);
       socket.send(JSON.stringify(new Message({ type: MessageTypes.ADD_TILES, data: playerTiles })));
       socket.send(JSON.stringify(new Message({ type: MessageTypes.PLAYER_ORDER, data: playerOrder })));
+      socket.send(JSON.stringify(new Message({ type: MessageTypes.NOTIFY_START })));
     });
   }
 
