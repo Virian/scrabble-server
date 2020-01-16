@@ -69,18 +69,28 @@ module.exports = class Game {
   }
 
   handleClientMessage(message, ip) {
-    const data = JSON.parse(message);
+    const messageObj = new Message(JSON.parse(message));
     const playerIndex = this.players.findIndex((player) => player.player.ip === ip);
+    console.log({ messageObj, playerIndex });
     if (this.activePlayerIndex !== playerIndex) return;
-    switch (message.action) {
-      case 'place':
+    switch (messageObj.type) {
+      case MessageTypes.PLACE:
+        this.holdCount = 0;
         // place tiles
         break;
-      case 'swap':
+      case MessageTypes.SWAP:
+        this.holdCount = 0;
         // swap tiles
         break;
-      case 'hold':
+      case MessageTypes.HOLD:
         // hold
+        this.holdCount += 1;
+        this.activePlayerIndex = (this.activePlayerIndex + 1) % this.players.length;
+        this.players[this.activePlayerIndex].socket.send(JSON.stringify(new Message({ type: MessageTypes.YOUR_TURN })));
+        this.players.forEach(({ socket }, index) => {
+          if (index === playerIndex || index === this.activePlayerIndex) return; // don't send information to a player who decided to hold or to the next player
+          socket.send(JSON.stringify(new Message({ type: MessageTypes.NEXT_PLAYER })));
+        });
         break;
       default:
         // unknown action
