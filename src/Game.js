@@ -68,6 +68,15 @@ module.exports = class Game {
     })));
   }
 
+  broadcastNextTurn(indexToOmit) {
+    this.activePlayerIndex = (this.activePlayerIndex + 1) % this.players.length;
+    this.players[this.activePlayerIndex].socket.send(JSON.stringify(new Message({ type: MessageTypes.YOUR_TURN })));
+    this.players.forEach(({ socket }, index) => {
+      if (index === indexToOmit || index === this.activePlayerIndex) return; // don't send information to a player who decided to hold or to the next player
+      socket.send(JSON.stringify(new Message({ type: MessageTypes.NEXT_PLAYER })));
+    });
+  }
+
   handleClientMessage(message, ip) {
     const messageObj = new Message(JSON.parse(message));
     const playerIndex = this.players.findIndex((player) => player.player.ip === ip);
@@ -78,19 +87,33 @@ module.exports = class Game {
         this.holdCount = 0;
         // place tiles
         break;
-      case MessageTypes.SWAP:
+      case MessageTypes.SWAP: {
         this.holdCount = 0;
-        // swap tiles
-        break;
-      case MessageTypes.HOLD:
-        // hold
-        this.holdCount += 1; // TODO: game over on too many holds
-        this.activePlayerIndex = (this.activePlayerIndex + 1) % this.players.length;
-        this.players[this.activePlayerIndex].socket.send(JSON.stringify(new Message({ type: MessageTypes.YOUR_TURN })));
-        this.players.forEach(({ socket }, index) => {
-          if (index === playerIndex || index === this.activePlayerIndex) return; // don't send information to a player who decided to hold or to the next player
-          socket.send(JSON.stringify(new Message({ type: MessageTypes.NEXT_PLAYER })));
+        // TODO: check if a player has letters he's trying to swap
+        if (messageObj.data.length > this.bag.length) {
+          const tilesToSend = messageObj.data.map((letter) => {
+            return new Tile(tiles.find((tile) => tile.letter === letter));
+          });
+          this.players[this.activePlayerIndex].socket.send(JSON.stringify(new Message({
+            type: MessageTypes.SWAP_CANCELLED,
+            data: tilesToSend,
+          })));
+        }
+        const newTiles = messageObj.data.map((letter) => {
+          return new Tile(tiles.find((tile) => tile.letter === letter));
         });
+        const tilesToSend = this.bag.splice(0, messageObj.data.length, ...newTiles);
+        this.bag = shuffle(this.bag);
+        this.players[this.activePlayerIndex].socket.send(JSON.stringify(new Message({
+          type: MessageTypes.SWAP_ACCEPTED,
+          data: tilesToSend,
+        })));
+        this.broadcastNextTurn(playerIndex);
+        break;
+      }
+      case MessageTypes.HOLD:
+        this.holdCount += 1; // TODO: game over on too many holds
+        this.broadcastNextTurn(playerIndex);
         break;
       default:
         // unknown action
