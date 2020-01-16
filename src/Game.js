@@ -84,7 +84,7 @@ module.exports = class Game {
         break;
       case MessageTypes.HOLD:
         // hold
-        this.holdCount += 1;
+        this.holdCount += 1; // TODO: game over on too many holds
         this.activePlayerIndex = (this.activePlayerIndex + 1) % this.players.length;
         this.players[this.activePlayerIndex].socket.send(JSON.stringify(new Message({ type: MessageTypes.YOUR_TURN })));
         this.players.forEach(({ socket }, index) => {
