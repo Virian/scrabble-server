@@ -1,4 +1,5 @@
 const BoardBonus = require('./BoardBonus');
+const Tile = require('./Tile');
 
 module.exports = class Board {
   constructor() {
@@ -197,6 +198,12 @@ module.exports = class Board {
         y: 14, x: 14, type: 'word', multiplier: 3,
       }),
     ];
+  }
+
+  addLetters(letters) {
+    letters.forEach(({ letter, score, x, y }) => {
+      this.board[y][x] = new Tile({ letter, score });
+    });
   }
 
   toMessage() {

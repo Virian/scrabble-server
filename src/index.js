@@ -3,11 +3,8 @@ const { Server } = require('ws');
 const GameController = require('./GameController');
 
 const PORT = process.env.PORT || 3001;
-const INDEX = '/index.html'; // TODO: remove
 
-const server = express()
-  .use((req, res) => res.sendFile(INDEX, { root: __dirname })) // TODO: remove
-  .listen(PORT, () => console.log(`Listening on ${PORT}`));
+const server = express().listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 const wss = new Server({ server });
 const gameController = new GameController();
@@ -19,9 +16,3 @@ wss.on('connection', (ws, req) => {
   gameController.connectToGame(ws, ip);
   ws.on('close', () => console.log('Client disconnected'));
 });
-
-setInterval(() => {
-  wss.clients.forEach((client) => {
-    // client.send(new Date().toTimeString());
-  });
-}, 1000);

@@ -5,7 +5,8 @@ const Board = require('./Board');
 const Player = require('./Player');
 const Message = require('./Message');
 const MessageTypes = require('./MessageTypes/MessageTypes');
-const gameState = require('./GameState/GameState');
+const GameState = require('./GameState/GameState');
+const { isPropertyEqual } = require('./array.utils');
 
 module.exports = class Game {
   constructor() {
@@ -15,7 +16,8 @@ module.exports = class Game {
     this.bag = [];
     this.board = new Board();
     this.holdCount = 0;
-    this.state = gameState.WAITING_FOR_PLAYERS;
+    this.state = GameState.WAITING_FOR_PLAYERS;
+    this.newLetters = null;
   }
 
   isReadyToStart() {
@@ -83,10 +85,22 @@ module.exports = class Game {
     console.log({ messageObj, playerIndex });
     if (this.activePlayerIndex !== playerIndex) return;
     switch (messageObj.type) {
-      case MessageTypes.PLACE:
+      case MessageTypes.PLACE: {
+        // TODO: check if a player has these letters
+        // TODO: check if letters are in one line
+        // TODO: check if letters cross the center if it's first turn
+        // TODO: check if letters are connected to each other if it's first turn
+        // TODO: check if letters are adjacent to the other ones
         this.holdCount = 0;
-        // place tiles
+        this.newLetters = messageObj.data;
+        this.state = GameState.WAITING_WORD_ACCEPTANCE;
+        this.players[this.activePlayerIndex].socket.send(JSON.stringify(new Message({ type: MessageTypes.AWAITING_OTHERS_ACCEPTANCE })));
+        this.players.forEach(({ socket }, index) => {
+          if (index === this.activePlayerIndex) return;
+          socket.send(JSON.stringify(new Message({ type: MessageTypes.AWAITING_ACCEPTANCE, data: this.newLetters })));
+        });
         break;
+      }
       case MessageTypes.SWAP: {
         this.holdCount = 0;
         // TODO: check if a player has letters he's trying to swap
