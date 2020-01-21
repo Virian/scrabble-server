@@ -1,5 +1,6 @@
 const BoardBonus = require('./BoardBonus');
 const Tile = require('./Tile');
+const { isPropertyEqual } = require('./array.utils');
 
 module.exports = class Board {
   constructor() {
@@ -204,6 +205,106 @@ module.exports = class Board {
     letters.forEach(({ letter, score, x, y }) => {
       this.board[y][x] = new Tile({ letter, score });
     });
+  }
+
+  calculateScore(newLetters) {
+    const allWords = newLetters.reduce((words, newLetter) => {
+      const { x, y } = newLetter;
+      let i = y;
+      let startIndex = -1;
+      let endIndex = -1;
+      while (this.board[i][x] !== null && i > -1) {
+        startIndex = i;
+        i -= 1;
+      }
+      i = y;
+      while (this.board[i][x] !== null && i < this.board.length) {
+        endIndex = i;
+        i += 1;
+      }
+      const verticalWord = {
+        start: {
+          x,
+          y: startIndex,
+        },
+        end: {
+          x,
+          y: endIndex,
+        },
+        length: endIndex - startIndex + 1,
+      };
+      i = x;
+      while (this.board[y][i] !== null && i > -1) {
+        startIndex = i;
+        i -= 1;
+      }
+      i = x;
+      while (this.board[y][i] !== null && i < this.board[y].length) {
+        endIndex = i;
+        i += 1;
+      }
+      const horizontalWord = {
+        start: {
+          x: startIndex,
+          y,
+        },
+        end: {
+          x: endIndex,
+          y,
+        },
+        length: endIndex - startIndex + 1,
+      };
+      let toReturn = words.slice();
+      if (horizontalWord.length > 1
+        && (words.findIndex((word) => JSON.stringify(word) === JSON.stringify(horizontalWord)) === -1)) {
+        toReturn = [...toReturn, horizontalWord];
+      }
+      if (verticalWord.length > 1
+        && (words.findIndex((word) => JSON.stringify(word) === JSON.stringify(verticalWord)) === -1)) {
+        toReturn = [...toReturn, verticalWord];
+      }
+      return toReturn;
+    }, []);
+    const usedBonuses = [];
+    const score = allWords.reduce((accScore, { start, end }) => {
+      const isHorizontal = isPropertyEqual([start, end], 'y');
+      let wordMultiplier = 1;
+      let wordScore = 0;
+      if (isHorizontal) {
+        for (let i = start.x; i <= end.x; i += 1) {
+          const bonus = this.bonuses.find((boardBonus) => boardBonus.y === start.y && boardBonus.x === i);
+          if (bonus && !bonus.isUsed) {
+            usedBonuses.push(bonus);
+            if (bonus.type === 'letter') {
+              wordScore += this.board[start.y][i].score * bonus.multiplier;
+            } else {
+              wordScore += this.board[start.y][i].score;
+              wordMultiplier *= bonus.multiplier;
+            }
+          } else {
+            wordScore += this.board[start.y][i].score;
+          }
+        }
+      } else {
+        for (let i = start.y; i <= end.y; i += 1) {
+          const bonus = this.bonuses.find((boardBonus) => boardBonus.y === i && boardBonus.x === start.x);
+          if (bonus && !bonus.isUsed) {
+            usedBonuses.push(bonus);
+            if (bonus.type === 'letter') {
+              wordScore += this.board[i][start.x].score * bonus.multiplier;
+            } else {
+              wordScore += this.board[i][start.x].score;
+              wordMultiplier *= bonus.multiplier;
+            }
+          } else {
+            wordScore += this.board[i][start.x].score;
+          }
+        }
+      }
+      return accScore + wordScore * wordMultiplier;
+    }, 0);
+    usedBonuses.forEach((bonus) => bonus.useBonus());
+    return score;
   }
 
   toMessage() {

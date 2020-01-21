@@ -6,7 +6,6 @@ const Player = require('./Player');
 const Message = require('./Message');
 const MessageTypes = require('./MessageTypes/MessageTypes');
 const GameState = require('./GameState/GameState');
-const { isPropertyEqual } = require('./array.utils');
 
 module.exports = class Game {
   constructor() {
@@ -18,6 +17,7 @@ module.exports = class Game {
     this.holdCount = 0;
     this.state = GameState.WAITING_FOR_PLAYERS;
     this.newLetters = null;
+    this.playersThatAccepted = new Set();
   }
 
   isReadyToStart() {
@@ -35,6 +35,7 @@ module.exports = class Game {
     });
     this.activePlayerIndex = 0;
     const playerOrder = this.players.map(({ player: { id, order } }) => ({ id, order }));
+    this.state = GameState.WAITING_FIRST_WORD;
     this.players.forEach(({ player, socket }) => {
       const playerTiles = this.bag.splice(0, 7);
       player.giveTiles(playerTiles);
@@ -79,14 +80,29 @@ module.exports = class Game {
     });
   }
 
+  broadcastScore(playerId, score) {
+    this.players.forEach(({ socket }) => {
+      socket.send(JSON.stringify(new Message({
+        type: MessageTypes.UPDATE_SCORE,
+        data: {
+          playerId,
+          score,
+        },
+      })));
+    });
+  }
+
   handleClientMessage(message, ip) {
     const messageObj = new Message(JSON.parse(message));
     const playerIndex = this.players.findIndex((player) => player.player.ip === ip);
     console.log({ messageObj, playerIndex });
-    if (this.activePlayerIndex !== playerIndex) return;
+    if (this.activePlayerIndex !== playerIndex && this.state !== GameState.WAITING_WORD_ACCEPTANCE) {
+      return;
+    }
     switch (messageObj.type) {
       case MessageTypes.PLACE: {
         // TODO: check if a player has these letters
+        // TODO: handle blank letter
         // TODO: check if letters are in one line
         // TODO: check if letters cross the center if it's first turn
         // TODO: check if letters are connected to each other if it's first turn
@@ -101,6 +117,21 @@ module.exports = class Game {
         });
         break;
       }
+      case MessageTypes.WORD_ACCEPT:
+        this.playersThatAccepted.add(playerIndex);
+        if (this.playersThatAccepted.size === this.players.length - 1) {
+          this.board.addLetters(this.newLetters);
+          const score = this.board.calculateScore(this.newLetters);
+          this.broadcastScore(this.players[this.activePlayerIndex].player.id, score);
+          this.playersThatAccepted.clear();
+          this.newLetters = null;
+          this.state = GameState.WAITING_WORD;
+          this.broadcastNextTurn();
+        }
+        break;
+      case MessageTypes.WORD_CHECK:
+        // TODO: do it
+        break;
       case MessageTypes.SWAP: {
         this.holdCount = 0;
         // TODO: check if a player has letters he's trying to swap
