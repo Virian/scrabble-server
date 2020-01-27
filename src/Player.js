@@ -1,5 +1,5 @@
 module.exports = class Player {
-  constructor({ id, ip}) {
+  constructor({ id, ip }) {
     this.id = id;
     this.ip = ip;
     this.order = null;
@@ -9,5 +9,12 @@ module.exports = class Player {
 
   giveTiles(tiles) {
     this.rack = this.rack.concat(tiles);
+  }
+
+  removeTiles(letters) {
+    letters.forEach((letter) => {
+      const index = this.rack.findIndex((tile) => tile.letter === letter);
+      this.rack.splice(index, 1);
+    });
   }
 };

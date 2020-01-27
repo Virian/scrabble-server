@@ -121,8 +121,15 @@ module.exports = class Game {
         this.playersThatAccepted.add(playerIndex);
         if (this.playersThatAccepted.size === this.players.length - 1) {
           this.board.addLetters(this.newLetters);
+          const currentPlayer = this.players[this.activePlayerIndex];
+          currentPlayer.player.removeTiles(this.newLetters.map(({ letter }) => letter));
+          const newTiles = this.bag.splice(0, this.newLetters.length);
+          currentPlayer.player.giveTiles(newTiles);
+          this.players[this.activePlayerIndex].socket.send(
+            JSON.stringify(new Message({ type: MessageTypes.ADD_TILES, data: newTiles })),
+          );
           const score = this.board.calculateScore(this.newLetters);
-          this.broadcastScore(this.players[this.activePlayerIndex].player.id, score);
+          this.broadcastScore(currentPlayer.player.id, score);
           this.playersThatAccepted.clear();
           this.newLetters = null;
           this.state = GameState.WAITING_WORD;
@@ -136,17 +143,13 @@ module.exports = class Game {
         this.holdCount = 0;
         // TODO: check if a player has letters he's trying to swap
         if (messageObj.data.length > this.bag.length) {
-          const tilesToSend = messageObj.data.map((letter) => {
-            return new Tile(tiles.find((tile) => tile.letter === letter));
-          });
+          const tilesToSend = messageObj.data.map((letter) => new Tile(tiles.find((tile) => tile.letter === letter)));
           this.players[this.activePlayerIndex].socket.send(JSON.stringify(new Message({
             type: MessageTypes.SWAP_CANCELLED,
             data: tilesToSend,
           })));
         }
-        const newTiles = messageObj.data.map((letter) => {
-          return new Tile(tiles.find((tile) => tile.letter === letter));
-        });
+        const newTiles = messageObj.data.map((letter) => new Tile(tiles.find((tile) => tile.letter === letter)));
         const tilesToSend = this.bag.splice(0, messageObj.data.length, ...newTiles);
         this.bag = shuffle(this.bag);
         this.players[this.activePlayerIndex].socket.send(JSON.stringify(new Message({
