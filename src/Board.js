@@ -1,3 +1,4 @@
+const { sortedUniqBy, sortBy } = require('lodash');
 const BoardBonus = require('./BoardBonus');
 const Tile = require('./Tile');
 const { isPropertyEqual } = require('./array.utils');
@@ -207,19 +208,29 @@ module.exports = class Board {
     });
   }
 
-  calculateScore(newLetters) {
-    const allWords = newLetters.reduce((words, newLetter) => {
+  getAllNewWords(newLetters, areLettersOnBoard = true, getStrings = false) {
+    const board = areLettersOnBoard ? this.board : this.board.slice();
+    if (!areLettersOnBoard) {
+      newLetters.forEach(({ letter, score, x, y }) => {
+        board[y][x] = new Tile({ letter, score });
+      });
+    }
+    return newLetters.reduce((words, newLetter) => {
       const { x, y } = newLetter;
       let i = y;
       let startIndex = -1;
       let endIndex = -1;
-      while (this.board[i][x] !== null && i > -1) {
+      let newWord = [];
+
+      while (board[i][x] !== null && i > -1) {
         startIndex = i;
+        newWord.push({ index: i, letter: board[i][x].letter });
         i -= 1;
       }
       i = y;
-      while (this.board[i][x] !== null && i < this.board.length) {
+      while (board[i][x] !== null && i < board.length) {
         endIndex = i;
+        newWord.push({ index: i, letter: board[i][x].letter });
         i += 1;
       }
       const verticalWord = {
@@ -232,15 +243,20 @@ module.exports = class Board {
           y: endIndex,
         },
         length: endIndex - startIndex + 1,
+        word: sortedUniqBy(sortBy(newWord, 'index'), 'index').map(({ letter }) => letter).join(''),
       };
+
+      newWord = [];
       i = x;
-      while (this.board[y][i] !== null && i > -1) {
+      while (board[y][i] !== null && i > -1) {
         startIndex = i;
+        newWord.push({ index: i, letter: board[y][i].letter });
         i -= 1;
       }
       i = x;
-      while (this.board[y][i] !== null && i < this.board[y].length) {
+      while (board[y][i] !== null && i < board[y].length) {
         endIndex = i;
+        newWord.push({ index: i, letter: board[y][i].letter });
         i += 1;
       }
       const horizontalWord = {
@@ -253,6 +269,7 @@ module.exports = class Board {
           y,
         },
         length: endIndex - startIndex + 1,
+        word: sortedUniqBy(sortBy(newWord, 'index'), 'index').map(({ letter }) => letter).join(''),
       };
       let toReturn = words.slice();
       if (horizontalWord.length > 1
@@ -265,6 +282,10 @@ module.exports = class Board {
       }
       return toReturn;
     }, []);
+  }
+
+  calculateScore(newLetters) {
+    const allWords = this.getAllNewWords(newLetters);
     const usedBonuses = [];
     const score = allWords.reduce((accScore, { start, end }) => {
       const isHorizontal = isPropertyEqual([start, end], 'y');

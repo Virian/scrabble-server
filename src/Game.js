@@ -136,9 +136,12 @@ module.exports = class Game {
           this.broadcastNextTurn();
         }
         break;
-      case MessageTypes.WORD_CHECK:
-        // TODO: do it
+      case MessageTypes.WORD_CHECK: {
+        const newWords = this.board.getAllNewWords(this.newLetters, false).map(({word}) => word);
+        console.log(newWords);
+        // TODO: check if all words are correct
         break;
+      }
       case MessageTypes.SWAP: {
         this.holdCount = 0;
         // TODO: check if a player has letters he's trying to swap
